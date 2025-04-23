@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Audio Downloader</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    .container { max-width: 600px; margin: auto; }
+    input, button { padding: 0.5rem; font-size: 1rem; }
+    #response { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>YouTube Audio Downloader</h1>
+    <p>Enter the YouTube video URL to download it as audio:</p>
+    <input type="text" id="url" placeholder="YouTube URL" size="50">
+    <button id="start">Start Download</button>
+
+    <div id="response"></div>
+  </div>
+
+  <script>
+    document.getElementById('start').onclick = () => {
+      const url = document.getElementById('url').value;
+      document.getElementById('response').textContent = 'Starting download...';
+
+      fetch('/download_audio', {    // Flask route ko call karte hain
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })  // URL ko JSON format mein bhejte hain
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Download failed');
+        return res.blob();  // Blob format mein file milta hai
+      })
+      .then(blob => {
+        const downloadUrl = window.URL.createObjectURL(blob);  // Blob ko download link mein convert karte hain
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'audio.mp3';  // Default file name
+        document.body.appendChild(a);
+        a.click();  // Click karte hain link ko download karne ke liye
+        a.remove();  // Link ko hata dete hain
+        window.URL.revokeObjectURL(downloadUrl);  // Memory ko free karte hain
+        document.getElementById('response').textContent = 'Download complete!';
+      })
+      .catch(err => {
+        document.getElementById('response').textContent = 'Error: ' + err.message;
+      });
+    };
+  </script>
+</body>
+</html>
